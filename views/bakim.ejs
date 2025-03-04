@@ -1,21 +1,32 @@
-<% layout('layout') %>
-<h1>Bakım Listesi</h1>
-<div class="loading">Veriler yükleniyor...</div>
-<table id="bakimTable" style="display:none;">
-    <thead>
-    <tr>
-        <th data-key="ad">Ad</th>
-        <th data-key="sonbakim">Tarih</th>
-        <th data-key="bakimbilgi">Bakım Bilgisi</th>
-        <th>Bakım Fotoğrafı</th>
-        <th data-key="cl">cl</th>
-        <th data-key="ph">pH</th>
-    </tr>
-    </thead>
-    <tbody id="bakimTableBody">
-    <!-- Veriler burada listelenecek -->
-    </tbody>
-</table>
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Bakım Listesi</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<% include partials/navbar %>
+<div class="content">
+    <h1>Bakım Listesi</h1>
+    <div class="loading">Veriler yükleniyor...</div>
+    <table id="bakimTable" style="display:none;">
+        <thead>
+        <tr>
+            <th data-key="ad">Ad</th>
+            <th data-key="sonbakim">Tarih</th>
+            <th data-key="bakimbilgi">Bakım Bilgisi</th>
+            <th>Bakım Fotoğrafı</th>
+            <th data-key="cl">cl</th>
+            <th data-key="ph">pH</th>
+        </tr>
+        </thead>
+        <tbody id="bakimTableBody">
+        <!-- Veriler burada listelenecek -->
+        </tbody>
+    </table>
+</div>
 
 <!-- Fotoğraf Modal -->
 <div id="photoModal" class="modal">
@@ -26,7 +37,7 @@
 </div>
 
 <script>
-    // Navbar alt menü açma/kapatma işlemi (gerekiyorsa burada da)
+    // Navbar alt menü açma/kapatma
     document.getElementById('bakim-menu').addEventListener('click', function() {
         this.classList.toggle('active');
     });
@@ -60,13 +71,13 @@
         data.forEach(item => {
             const row = document.createElement('tr');
             row.innerHTML = `
-        <td>${item.ad}</td>
-        <td>${formatTurkishDate(item.sonbakim)}</td>
-        <td>${item.bakimbilgi}</td>
-        <td>${item.bakimfoto ? `<span class="bakimfoto-link" data-src="${item.bakimfoto}">Fotoğrafı Gör</span>` : 'Yok'}</td>
-        <td>${item.cl}</td>
-        <td>${item.ph}</td>
-      `;
+          <td>${item.ad}</td>
+          <td>${formatTurkishDate(item.sonbakim)}</td>
+          <td>${item.bakimbilgi}</td>
+          <td>${item.bakimfoto ? `<span class="bakimfoto-link" data-src="${item.bakimfoto}">Fotoğrafı Gör</span>` : 'Yok'}</td>
+          <td>${item.cl}</td>
+          <td>${item.ph}</td>
+        `;
             tableBody.appendChild(row);
         });
         document.querySelectorAll('.bakimfoto-link').forEach(link => {
@@ -110,3 +121,5 @@
         renderTable(bakimData);
     });
 </script>
+</body>
+</html>

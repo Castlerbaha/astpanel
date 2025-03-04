@@ -1,19 +1,30 @@
-<% layout('layout') %>
-<h1>Müşteri Listesi</h1>
-<div class="loading">Veriler yükleniyor...</div>
-<table id="musterilerTable" style="display:none;">
-    <thead>
-    <tr>
-        <th data-key="ad">Ad</th>
-        <th data-key="sonkontrol">Son Giriş</th>
-        <th data-key="borc">Borç</th>
-        <th data-key="numara">İletişim</th>
-    </tr>
-    </thead>
-    <tbody id="musterilerTableBody">
-    <!-- Veriler burada listelenecek -->
-    </tbody>
-</table>
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Müşteri Listesi</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<% include partials/navbar %>
+<div class="content">
+    <h1>Müşteri Listesi</h1>
+    <div class="loading">Veriler yükleniyor...</div>
+    <table id="musterilerTable" style="display:none;">
+        <thead>
+        <tr>
+            <th data-key="ad">Ad</th>
+            <th data-key="sonkontrol">Son Giriş</th>
+            <th data-key="borc">Borç</th>
+            <th data-key="numara">İletişim</th>
+        </tr>
+        </thead>
+        <tbody id="musterilerTableBody">
+        <!-- Veriler burada listelenecek -->
+        </tbody>
+    </table>
+</div>
 
 <script>
     let musteriData = [];
@@ -33,11 +44,11 @@
         data.forEach(item => {
             const row = document.createElement('tr');
             row.innerHTML = `
-        <td>${item.ad}</td>
-        <td>${item.sonkontrol}</td>
-        <td>${item.borc}</td>
-        <td>${item.numara || 'Yok'}</td>
-      `;
+          <td>${item.ad}</td>
+          <td>${item.sonkontrol}</td>
+          <td>${item.borc}</td>
+          <td>${item.numara || 'Yok'}</td>
+        `;
             tableBody.appendChild(row);
         });
     }
@@ -62,3 +73,5 @@
         renderMusteriler(musteriData);
     });
 </script>
+</body>
+</html>

@@ -2,17 +2,17 @@
 const express = require("express");
 const mysql = require("mysql2");
 const path = require("path");
-require('dotenv').config(); // .env dosyasındaki verileri çekmek için
+require("dotenv").config(); // .env dosyasındaki verileri yükler
 
 const app = express();
 const port = 3000;
 
-// MySQL bağlantı ayarları (env dosyasından çekilecek örneğin DB_PASSWORD)
+// MySQL bağlantı ayarları (env'den çekiliyor)
 const connection = mysql.createConnection({
     host: process.env.DB_HOST || "mysqlasteriondb-asteriondb1.f.aivencloud.com",
     port: process.env.DB_PORT || 25069,
     user: process.env.DB_USER || "avnadmin",
-    password: process.env.DB_PASSWORD, // .env dosyasından
+    password: process.env.DB_PASSWORD, // .env içerisindeki şifre
     database: process.env.DB_NAME || "defaultdb",
     ssl: { rejectUnauthorized: false }
 });
@@ -26,10 +26,10 @@ connection.connect(err => {
 });
 
 // EJS view engine ayarı
-app.set('view engine', 'ejs');
-app.set('views', path.join(__dirname, 'views'));
+app.set("view engine", "ejs");
+app.set("views", path.join(__dirname, "views"));
 
-// Statik dosyalar (CSS, JS, resimler, vb.)
+// Statik dosyaları sun (CSS, JS, resimler, vb.)
 app.use(express.static(__dirname));
 
 // API: Bakım verilerini döndürür
@@ -46,7 +46,8 @@ app.get("/api/bakimlar", (req, res) => {
 
 // API: Müşteri verilerini döndürür
 app.get("/api/musteriler", (req, res) => {
-    // Burada "son kontrol" olarak hesapguncellenme'yi, "numara" sütununu varsayıyoruz.
+    // Burada "son kontrol" için hesapguncellenme sütununu,
+    // "numara" sütunu müşteri iletişimi için varsayıyoruz.
     const sql = "SELECT ad, hesapguncellenme AS sonkontrol, borc, numara FROM musteriler";
     connection.query(sql, (error, results) => {
         if (error) {
@@ -59,19 +60,18 @@ app.get("/api/musteriler", (req, res) => {
 
 // Sayfa renderları
 app.get("/", (req, res) => {
-    // Ana sayfa için basit bir render örneği
     res.render("index");
 });
 
 app.get("/bakim", (req, res) => {
-    res.render("bakim"); // bakim.ejs
+    res.render("bakim");
 });
 
 app.get("/musteriler", (req, res) => {
-    res.render("musteriler"); // musteriler.ejs
+    res.render("musteriler");
 });
 
-// Diğer sayfalar da benzer şekilde eklenebilir...
+// Diğer sayfalar için benzer endpoint'ler eklenebilir
 
 app.listen(port, () => {
     console.log(`Server http://localhost:${port} üzerinde çalışıyor.`);
