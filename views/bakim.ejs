@@ -1,45 +1,112 @@
-<!DOCTYPE html>
-<html lang="tr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Bakım Listesi</title>
-    <link rel="stylesheet" href="/styles.css">
-</head>
-<body>
-<% include partials/navbar %>
-<div class="content">
-    <h1>Bakım Listesi</h1>
-    <table id="bakimTable">
-        <thead>
-        <tr>
-            <th>Ad</th>
-            <th>Tarih</th>
-            <th>Bakım Bilgisi</th>
-            <th>Bakım Fotoğrafı</th>
-            <th>cl</th>
-            <th>pH</th>
-        </tr>
-        </thead>
-        <tbody>
-        <% bakimlar.forEach(function(item){ %>
-            <tr>
-                <td><%= item.ad %></td>
-                <td><%= item.sonbakim.split(" ")[1] + " & " + item.sonbakim.split(" ")[0].split("-")[2] + "." + item.sonbakim.split(" ")[0].split("-")[1] %></td>
-                <td><%= item.bakimbilgi %></td>
-                <td>
-                    <% if(item.bakimfoto){ %>
-                        <a href="<%= item.bakimfoto %>" target="_blank">Fotoğrafı Gör</a>
-                    <% } else { %>
-                        Yok
-                    <% } %>
-                </td>
-                <td><%= item.cl %></td>
-                <td><%= item.ph %></td>
-            </tr>
-        <% }) %>
-        </tbody>
-    </table>
+<% layout('layout') %>
+<h1>Bakım Listesi</h1>
+<div class="loading">Veriler yükleniyor...</div>
+<table id="bakimTable" style="display:none;">
+    <thead>
+    <tr>
+        <th data-key="ad">Ad</th>
+        <th data-key="sonbakim">Tarih</th>
+        <th data-key="bakimbilgi">Bakım Bilgisi</th>
+        <th>Bakım Fotoğrafı</th>
+        <th data-key="cl">cl</th>
+        <th data-key="ph">pH</th>
+    </tr>
+    </thead>
+    <tbody id="bakimTableBody">
+    <!-- Veriler burada listelenecek -->
+    </tbody>
+</table>
+
+<!-- Fotoğraf Modal -->
+<div id="photoModal" class="modal">
+    <span id="modalClose" class="modal-close">&times;</span>
+    <div class="modal-content">
+        <img id="modalImage" src="" alt="Bakım Fotoğrafı">
+    </div>
 </div>
-</body>
-</html>
+
+<script>
+    // Navbar alt menü açma/kapatma işlemi (gerekiyorsa burada da)
+    document.getElementById('bakim-menu').addEventListener('click', function() {
+        this.classList.toggle('active');
+    });
+
+    // Türkiye formatında tarih: "Saat & Gün.Ay"
+    function formatTurkishDate(datetimeStr) {
+        const parts = datetimeStr.split(" ");
+        if(parts.length < 2) return datetimeStr;
+        const timePart = parts[1];
+        const datePart = parts[0];
+        const dateComponents = datePart.split("-");
+        if(dateComponents.length < 3) return datetimeStr;
+        const [year, month, day] = dateComponents;
+        return timePart + " & " + day + "." + month;
+    }
+
+    let bakimData = [];
+    async function fetchBakimData() {
+        try {
+            const response = await fetch('/api/bakimlar');
+            if (!response.ok) throw new Error("Veri çekme hatası");
+            return await response.json();
+        } catch (error) {
+            console.error("Hata:", error);
+            return [];
+        }
+    }
+    function renderTable(data) {
+        const tableBody = document.getElementById('bakimTableBody');
+        tableBody.innerHTML = "";
+        data.forEach(item => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+        <td>${item.ad}</td>
+        <td>${formatTurkishDate(item.sonbakim)}</td>
+        <td>${item.bakimbilgi}</td>
+        <td>${item.bakimfoto ? `<span class="bakimfoto-link" data-src="${item.bakimfoto}">Fotoğrafı Gör</span>` : 'Yok'}</td>
+        <td>${item.cl}</td>
+        <td>${item.ph}</td>
+      `;
+            tableBody.appendChild(row);
+        });
+        document.querySelectorAll('.bakimfoto-link').forEach(link => {
+            link.addEventListener('click', function() {
+                const src = this.getAttribute('data-src');
+                showModal(src);
+            });
+        });
+    }
+    function sortData(key) {
+        bakimData.sort((a, b) => {
+            if(a[key] < b[key]) return -1;
+            if(a[key] > b[key]) return 1;
+            return 0;
+        });
+        renderTable(bakimData);
+    }
+    function showModal(src) {
+        const modal = document.getElementById('photoModal');
+        const modalImg = document.getElementById('modalImage');
+        modalImg.src = src;
+        modal.style.display = "block";
+    }
+    document.getElementById('modalClose').addEventListener('click', () => {
+        document.getElementById('photoModal').style.display = "none";
+    });
+    window.addEventListener('click', function(event) {
+        const modal = document.getElementById('photoModal');
+        if (event.target == modal) modal.style.display = "none";
+    });
+    document.querySelectorAll("th[data-key]").forEach(header => {
+        header.addEventListener('click', () => {
+            const key = header.getAttribute('data-key');
+            sortData(key);
+        });
+    });
+    window.addEventListener('DOMContentLoaded', async () => {
+        bakimData = await fetchBakimData();
+        document.querySelector('.loading').style.display = "none";
+        document.getElementById('bakimTable').style.display = "table";
+        renderTable(bakimData);
+    });
+</script>
