@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Bakım Listesi</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<% include partials/navbar %>
+<div class="content">
+    <h1>Bakım Listesi</h1>
+    <table id="bakimTable">
+        <thead>
+        <tr>
+            <th>Ad</th>
+            <th>Tarih</th>
+            <th>Bakım Bilgisi</th>
+            <th>Bakım Fotoğrafı</th>
+            <th>cl</th>
+            <th>pH</th>
+        </tr>
+        </thead>
+        <tbody>
+        <% bakimlar.forEach(function(item){ %>
+            <tr>
+                <td><%= item.ad %></td>
+                <td><%= item.sonbakim.split(" ")[1] + " & " + item.sonbakim.split(" ")[0].split("-")[2] + "." + item.sonbakim.split(" ")[0].split("-")[1] %></td>
+                <td><%= item.bakimbilgi %></td>
+                <td>
+                    <% if(item.bakimfoto){ %>
+                        <a href="<%= item.bakimfoto %>" target="_blank">Fotoğrafı Gör</a>
+                    <% } else { %>
+                        Yok
+                    <% } %>
+                </td>
+                <td><%= item.cl %></td>
+                <td><%= item.ph %></td>
+            </tr>
+        <% }) %>
+        </tbody>
+    </table>
+</div>
+</body>
+</html>

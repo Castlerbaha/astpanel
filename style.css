@@ -1,0 +1,77 @@
+/* Genel Stiller */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f4f4;
+    display: flex;
+}
+
+/* Sayfa Yapısı */
+.container {
+    display: flex;
+    width: 100%;
+}
+
+/* Navbar (Sidebar) */
+.sidebar {
+    width: 250px;
+    background-color: #2c3e50;
+    color: white;
+    height: 100vh;
+    padding: 20px;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
+    overflow-y: auto;
+}
+
+.menu {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+}
+
+.menu-item {
+    margin-bottom: 10px;
+}
+
+.menu-title {
+    display: block;
+    padding: 10px;
+    background-color: #34495e;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: background 0.3s ease;
+}
+
+.menu-title:hover {
+    background-color: #1abc9c;
+}
+
+.submenu {
+    list-style-type: none;
+    padding-left: 15px;
+    display: none;
+}
+
+.submenu li {
+    margin: 5px 0;
+}
+
+.submenu a {
+    text-decoration: none;
+    color: white;
+    padding: 8px;
+    display: block;
+    border-radius: 3px;
+    transition: background 0.3s ease;
+}
+
+.submenu a:hover {
+    background-color: #16a085;
+}
+
+/* Ana İçerik */
+.content {
+    flex: 1;
+    padding: 20px;
+}

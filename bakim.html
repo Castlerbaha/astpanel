@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Bakım Listesi</title>
+    <style>
+        /* Genel stil ayarları */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f0f2f5;
+            display: flex;
+            min-height: 100vh;
+        }
+        /* Sidebar (Navbar) */
+        .sidebar {
+            width: 260px;
+            background: #fff;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+            padding: 20px;
+        }
+        .sidebar h2 { margin-bottom: 20px; }
+        .sidebar a {
+            display: block;
+            padding: 10px 15px;
+            margin-bottom: 10px;
+            color: #333;
+            text-decoration: none;
+            border-radius: 4px;
+            transition: background 0.3s;
+        }
+        .sidebar a:hover { background: #e4e6eb; }
+        .menu-item {
+            margin-bottom: 10px;
+        }
+        .menu-title {
+            padding: 10px 15px;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: background 0.3s;
+        }
+        .menu-title:hover { background: #e4e6eb; }
+        .submenu {
+            list-style: none;
+            padding-left: 20px;
+            margin-top: 5px;
+            display: none;
+        }
+        .submenu li a {
+            padding: 8px 15px;
+            font-size: 0.9em;
+        }
+        .menu-item.active .submenu { display: block; }
+
+        /* Content Alanı */
+        .content {
+            flex: 1;
+            padding: 40px;
+        }
+        h1 { margin-bottom: 20px; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #fff;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            overflow: hidden;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background: #e4e6eb;
+            cursor: pointer;
+        }
+        tr:hover { background: #f1f1f1; }
+        .loading { margin: 20px 0; text-align: center; }
+        .bakimfoto-link {
+            color: blue;
+            text-decoration: underline;
+            cursor: pointer;
+        }
+        /* Modal stilleri */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 100;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.7);
+        }
+        .modal-content {
+            margin: 10% auto;
+            display: block;
+            max-width: 80%;
+        }
+        .modal-content img {
+            width: 100%;
+            height: auto;
+        }
+        .modal-close {
+            position: absolute;
+            top: 15px;
+            right: 35px;
+            color: #fff;
+            font-size: 40px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+<!-- Navbar / Sidebar (Index.html'dekiyle aynı yapı) -->
+<div class="sidebar">
+    <h2>Admin Panel</h2>
+    <div class="menu-item" id="bakim-menu">
+        <div class="menu-title">Bakım</div>
+        <ul class="submenu">
+            <li><a href="bakim.html">Bakım Listesi</a></li>
+            <li><a href="#">Bakım Düzenle</a></li>
+        </ul>
+    </div>
+    <a href="#">Müşteri</a>
+    <a href="#">Çalışanlar</a>
+    <a href="#">Arıza</a>
+    <a href="#">Panel & Site</a>
+</div>
+
+<!-- İçerik Alanı -->
+<div class="content">
+    <h1>Bakım Listesi</h1>
+    <div class="loading">Veriler yükleniyor...</div>
+    <table id="bakimTable" style="display:none;">
+        <thead>
+        <tr>
+            <th data-key="ad">Ad</th>
+            <th data-key="sonbakim">Saat & Gün.Ay.Yıl</th>
+            <th data-key="bakimbilgi">Bakım Bilgisi</th>
+            <th>Bakım Fotoğrafı</th>
+            <th data-key="cl">cl</th>
+            <th data-key="ph">pH</th>
+        </tr>
+        </thead>
+        <tbody id="bakimTableBody">
+        <!-- Veriler burada listelenecek -->
+        </tbody>
+    </table>
+</div>
+
+<!-- Fotoğraf Modal'ı -->
+<div id="photoModal" class="modal">
+    <span id="modalClose" class="modal-close">&times;</span>
+    <div class="modal-content">
+        <img id="modalImage" src="" alt="Bakım Fotoğrafı">
+    </div>
+</div>
+
+<script>
+    let bakimData = [];
+
+    // Tarih formatlama: "YYYY-MM-DD HH:mm" → "HH:mm - DD.MM.YYYY"
+    function formatDate(dateStr) {
+        const date = new Date(dateStr);
+        if (isNaN(date)) return dateStr;
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        return `${hours}:${minutes} - ${day}.${month}.${year}`;
+    }
+
+    // API'den bakım verilerini çekme (Backend: /api/bakimlar)
+    async function fetchBakimData() {
+        try {
+            const response = await fetch('/api/bakimlar');
+            if (!response.ok) {
+                throw new Error("Veri çekme hatası");
+            }
+            return await response.json();
+        } catch (error) {
+            console.error("Hata:", error);
+            return [];
+        }
+    }
+
+    // Tabloyu verilerle doldurur
+    function renderTable(data) {
+        const tableBody = document.getElementById('bakimTableBody');
+        tableBody.innerHTML = "";
+        data.forEach(item => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+          <td>${item.ad}</td>
+          <td>${formatDate(item.sonbakim)}</td>
+          <td>${item.bakimbilgi}</td>
+          <td>
+            ${item.bakimfoto ? `<span class="bakimfoto-link" data-src="${item.bakimfoto}">Fotoğrafı Gör</span>` : 'Yok'}
+          </td>
+          <td>${item.cl}</td>
+          <td>${item.ph}</td>
+        `;
+            tableBody.appendChild(row);
+        });
+
+        // Fotoğraf linklerine tıklama ekle
+        document.querySelectorAll('.bakimfoto-link').forEach(link => {
+            link.addEventListener('click', function() {
+                const src = this.getAttribute('data-src');
+                showModal(src);
+            });
+        });
+    }
+
+    // Sütun sıralaması (veriler sıralanır)
+    function sortData(key) {
+        bakimData.sort((a, b) => {
+            if(a[key] < b[key]) return -1;
+            if(a[key] > b[key]) return 1;
+            return 0;
+        });
+        renderTable(bakimData);
+    }
+
+    // Modal gösterimi
+    function showModal(src) {
+        const modal = document.getElementById('photoModal');
+        const modalImg = document.getElementById('modalImage');
+        modalImg.src = src;
+        modal.style.display = "block";
+    }
+
+    // Modal kapatma
+    document.getElementById('modalClose').addEventListener('click', () => {
+        document.getElementById('photoModal').style.display = "none";
+    });
+    window.addEventListener('click', function(event) {
+        const modal = document.getElementById('photoModal');
+        if (event.target == modal) {
+            modal.style.display = "none";
+        }
+    });
+
+    // Sütun başlıklarına tıklanarak sıralama
+    document.querySelectorAll("th[data-key]").forEach(header => {
+        header.addEventListener('click', () => {
+            const key = header.getAttribute('data-key');
+            sortData(key);
+        });
+    });
+
+    // "Bakım" menüsünde alt menü açma kapama işlevi
+    document.getElementById('bakim-menu').addEventListener('click', function() {
+        this.classList.toggle('active');
+    });
+
+    // Sayfa yüklendiğinde verileri çek ve tabloyu oluştur
+    window.addEventListener('DOMContentLoaded', async () => {
+        bakimData = await fetchBakimData();
+        document.querySelector('.loading').style.display = "none";
+        document.getElementById('bakimTable').style.display = "table";
+        renderTable(bakimData);
+    });
+</script>
+</body>
+</html>
