@@ -3,12 +3,18 @@ const mysql = require("mysql2");
 const app = express();
 const port = 3000;
 
+require('dotenv').config();
+
+// Şimdi DATABASE_PASSWORD ortam değişkenini kullanabilirsin:
+const databasePassword = process.env.DATABASE_PASSWORD;
+
+
 // MySQL bağlantısı (önceki bilgilerle aynı)
 const connection = mysql.createConnection({
     host: "mysqlasteriondb-asteriondb1.f.aivencloud.com",
     port: 25069,
     user: "avnadmin",
-    password: "process.env.SERVICE_PASSWORD",
+    password: process.env.DB_PASSWORD,
     database: "defaultdb",
     ssl: { rejectUnauthorized: false }
 });
