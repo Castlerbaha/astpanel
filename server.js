@@ -4,8 +4,18 @@ const mysql = require("mysql2");
 const path = require("path");
 require("dotenv").config(); // .env dosyasındaki verileri yükler
 
+app.set("view engine", "ejs");
+app.set("views", path.join(__dirname, "views"));
+
+
 const app = express();
 const port = 3000;
+
+
+app.get("/", (req, res) => {
+    res.render("index");
+});
+
 
 // MySQL bağlantı ayarları (env'den çekiliyor)
 const connection = mysql.createConnection({
