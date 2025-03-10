@@ -10,7 +10,7 @@
   </style>
 </head>
 <body>
-<!-- Navbar (Sidebar) -->
+<!-- Ortak Navbar (Sidebar) -->
 <div class="sidebar">
   <h2><a href="index.html" style="text-decoration:none; color:inherit;">Admin Panel</a></h2>
   <div class="menu-item" id="bakim-menu">
@@ -27,29 +27,11 @@
       <li><a href="#">Müşteri Düzenle</a></li>
     </ul>
   </div>
-  <a href="#">Çalışanlar</a>
-  <a href="#">Arıza</a>
-  <a href="#">Panel & Site</a>
+  <a href="index.html">Admin Panel</a>
+  <a href="bakim.html">Bakım</a>
+  <a href="musteriler.html">Müşteriler</a>
 </div>
 
-<!-- İçerik Alanı -->
-<div class="content">
-  <h1>Müşteri Listesi</h1>
-  <div class="loading">Veriler yükleniyor...</div>
-  <table id="musterilerTable" style="display:none;">
-    <thead>
-    <tr>
-      <th data-key="ad">Müşteri</th>
-      <th data-key="borc">Borç</th>
-      <th data-key="sonkontrol">Son Giriş</th>
-      <th data-key="numara">İletişim</th>
-    </tr>
-    </thead>
-    <tbody id="musterilerTableBody">
-    <!-- Müşteri verileri burada listelenecek -->
-    </tbody>
-  </table>
-</div>
 
 <script>
   // Müşteri verilerini API'den çekmek için fonksiyon
