@@ -1,107 +1,40 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Özel Tasarım Admin Panel</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: #f0f2f5;
-      display: flex;
-    }
-    .sidebar {
-      width: 260px;
-      background: #fff;
-      box-shadow: 2px 0 5px rgba(0,0,0,0.1);
-      padding: 20px;
-    }
-    .sidebar h2 { margin-bottom: 20px; }
-    .sidebar a {
-      display: block;
-      padding: 10px 15px;
-      margin-bottom: 10px;
-      color: #333;
-      text-decoration: none;
-      border-radius: 4px;
-      transition: background 0.3s;
-    }
-    .sidebar a:hover {
-      background: #e4e6eb;
-    }
-    /* Alt menü stilleri */
-    .menu-item {
-      margin-bottom: 10px;
-    }
-    .menu-title {
-      padding: 10px 15px;
-      font-weight: bold;
-      cursor: pointer;
-      border-radius: 4px;
-      transition: background 0.3s;
-    }
-    .menu-title:hover {
-      background: #e4e6eb;
-    }
-    .submenu {
-      list-style: none;
-      padding-left: 20px;
-      margin-top: 5px;
-      display: none;
-    }
-    .submenu li a {
-      padding: 8px 15px;
-      font-size: 0.9em;
-    }
-    .menu-item.active .submenu {
-      display: block;
-    }
-    .content {
-      flex: 1;
-      padding: 40px;
-    }
-    .content h1 { margin-bottom: 20px; }
-    .card {
-      background: #fff;
-      padding: 20px;
-      margin-bottom: 20px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-      border-radius: 8px;
-    }
-  </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Admin Panel - Anasayfa</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+<!-- Navbar (Sidebar) -->
 <div class="sidebar">
-  <h2>Admin Panel</h2>
+  <h2><a href="index.html" style="text-decoration:none; color:inherit;">Admin Panel</a></h2>
   <div class="menu-item" id="bakim-menu">
     <div class="menu-title">Bakım</div>
     <ul class="submenu">
-      <li><a href="../node_modules/bakim.html">Bakım Listesi</a></li>
+      <li><a href="bakim.html">Bakım Listesi</a></li>
       <li><a href="#">Bakım Düzenle</a></li>
     </ul>
   </div>
-  <a href="#">Müşteri</a>
+  <div class="menu-item" id="musteriler-menu">
+    <div class="menu-title">Müşteriler</div>
+    <ul class="submenu">
+      <li><a href="musteriler.html">Müşteri Listesi</a></li>
+      <li><a href="#">Müşteri Düzenle</a></li>
+    </ul>
+  </div>
   <a href="#">Çalışanlar</a>
   <a href="#">Arıza</a>
   <a href="#">Panel & Site</a>
 </div>
+
+<!-- Main Content -->
 <div class="content">
-  <h1>Özel Figma Tasarımı Admin Panel</h1>
-  <div class="card">
-    <h3>Dashboard</h3>
-    <p>Özel tasarım içerik alanı.</p>
-  </div>
-  <div class="card">
-    <h3>Detaylar</h3>
-    <p>Ek bilgiler ve raporlar.</p>
-  </div>
+  <h1>Admin Panel Anasayfa</h1>
+  <p>Hoş geldiniz! Bu panelde veriler, raporlar ve yönetim araçları yer alacak.</p>
 </div>
-<script>
-  // "Bakım" menüsüne tıklandığında alt menüyü aç/kapa
-  document.getElementById('bakim-menu').addEventListener('click', function() {
-    this.classList.toggle('active');
-  });
-</script>
+
+<script src="script.js"></script>
 </body>
 </html>

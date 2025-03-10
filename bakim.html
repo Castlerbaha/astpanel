@@ -13,7 +13,7 @@
             display: flex;
             min-height: 100vh;
         }
-        /* Sidebar (Navbar) */
+        /* Navbar (Sidebar) */
         .sidebar {
             width: 260px;
             background: #fff;
@@ -54,7 +54,7 @@
         }
         .menu-item.active .submenu { display: block; }
 
-        /* Content Alanı */
+        /* İçerik Alanı */
         .content {
             flex: 1;
             padding: 40px;
@@ -118,9 +118,9 @@
     </style>
 </head>
 <body>
-<!-- Navbar / Sidebar (Index.html'dekiyle aynı yapı) -->
+<!-- Navbar (Sidebar) -->
 <div class="sidebar">
-    <h2>Admin Panel</h2>
+    <h2><a href="index.html" style="text-decoration:none; color:inherit;">Admin Panel</a></h2>
     <div class="menu-item" id="bakim-menu">
         <div class="menu-title">Bakım</div>
         <ul class="submenu">
@@ -128,10 +128,15 @@
             <li><a href="#">Bakım Düzenle</a></li>
         </ul>
     </div>
-    <a href="#">Müşteri</a>
-    <a href="#">Çalışanlar</a>
-    <a href="#">Arıza</a>
-    <a href="#">Panel & Site</a>
+    <div class="menu-item" id="musteriler-menu">
+        <div class="menu-title">Müşteriler</div>
+        <ul class="submenu">
+            <li><a href="musteriler.html">Müşteri Listesi</a></li>
+            <li><a href="#">Müşteri Düzenle</a></li>
+        </ul>
+    </div>
+    <a href="index.html">Admin Panel</a>
+    <a href="musteriler.html">Müşteriler</a>
 </div>
 
 <!-- İçerik Alanı -->
@@ -144,6 +149,7 @@
             <th data-key="ad">Ad</th>
             <th data-key="sonbakim">Saat & Gün.Ay.Yıl</th>
             <th data-key="bakimbilgi">Bakım Bilgisi</th>
+            <th data-key="calisan">Çalışan</th>
             <th>Bakım Fotoğrafı</th>
             <th data-key="cl">cl</th>
             <th data-key="ph">pH</th>
@@ -165,6 +171,7 @@
 
 <script>
     let bakimData = [];
+    let sortOrders = {}; // Her sütun için sıralama durumu (asc/desc)
 
     // Tarih formatlama: "YYYY-MM-DD HH:mm" → "HH:mm - DD.MM.YYYY"
     function formatDate(dateStr) {
@@ -182,9 +189,7 @@
     async function fetchBakimData() {
         try {
             const response = await fetch('/api/bakimlar');
-            if (!response.ok) {
-                throw new Error("Veri çekme hatası");
-            }
+            if (!response.ok) throw new Error("Veri çekme hatası");
             return await response.json();
         } catch (error) {
             console.error("Hata:", error);
@@ -202,9 +207,8 @@
           <td>${item.ad}</td>
           <td>${formatDate(item.sonbakim)}</td>
           <td>${item.bakimbilgi}</td>
-          <td>
-            ${item.bakimfoto ? `<span class="bakimfoto-link" data-src="${item.bakimfoto}">Fotoğrafı Gör</span>` : 'Yok'}
-          </td>
+          <td>${item.calisan}</td>
+          <td>${item.bakimfoto ? `<span class="bakimfoto-link" data-src="${item.bakimfoto}">Fotoğrafı Gör</span>` : 'Yok'}</td>
           <td>${item.cl}</td>
           <td>${item.ph}</td>
         `;
@@ -220,25 +224,48 @@
         });
     }
 
-    // Sütun sıralaması (veriler sıralanır)
+    // Sıralama fonksiyonu
     function sortData(key) {
+        // Sıralama yönünü belirle: önce asc, sonra desc
+        sortOrders[key] = sortOrders[key] === 'asc' ? 'desc' : 'asc';
+
+        // Tüm başlıklardaki okları sıfırla
+        document.querySelectorAll("th[data-key]").forEach(header => {
+            let baseText = header.getAttribute('data-base');
+            if (!baseText) {
+                baseText = header.innerText;
+                header.setAttribute('data-base', baseText);
+            }
+            header.innerText = baseText;
+        });
+
+        // Tıklanan başlığa ok ekle
+        const header = document.querySelector(`th[data-key="${key}"]`);
+        if (header) {
+            header.innerText = header.getAttribute('data-base') + (sortOrders[key] === 'asc' ? ' ▲' : ' ▼');
+        }
+
         bakimData.sort((a, b) => {
-            if(a[key] < b[key]) return -1;
-            if(a[key] > b[key]) return 1;
+            let valA = a[key];
+            let valB = b[key];
+            if(key === 'sonbakim'){
+                valA = new Date(valA);
+                valB = new Date(valB);
+            }
+            if(valA < valB) return sortOrders[key] === 'asc' ? -1 : 1;
+            if(valA > valB) return sortOrders[key] === 'asc' ? 1 : -1;
             return 0;
         });
         renderTable(bakimData);
     }
 
-    // Modal gösterimi
+    // Modal işlemleri
     function showModal(src) {
         const modal = document.getElementById('photoModal');
         const modalImg = document.getElementById('modalImage');
         modalImg.src = src;
         modal.style.display = "block";
     }
-
-    // Modal kapatma
     document.getElementById('modalClose').addEventListener('click', () => {
         document.getElementById('photoModal').style.display = "none";
     });
@@ -249,7 +276,7 @@
         }
     });
 
-    // Sütun başlıklarına tıklanarak sıralama
+    // Sütun başlıklarına sıralama olayı ekle
     document.querySelectorAll("th[data-key]").forEach(header => {
         header.addEventListener('click', () => {
             const key = header.getAttribute('data-key');
@@ -257,7 +284,7 @@
         });
     });
 
-    // "Bakım" menüsünde alt menü açma kapama işlevi
+    // "Bakım" menüsünde alt menü açma kapama
     document.getElementById('bakim-menu').addEventListener('click', function() {
         this.classList.toggle('active');
     });

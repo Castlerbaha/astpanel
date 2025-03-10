@@ -2,22 +2,12 @@
 const express = require("express");
 const mysql = require("mysql2");
 const path = require("path");
-require("dotenv").config(); // .env dosyasındaki verileri yükler
-
-app.set("view engine", "ejs");
-app.set("views", path.join(__dirname, "views"));
-
+require("dotenv").config();
 
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 3000;
 
-
-app.get("/", (req, res) => {
-    res.render("index");
-});
-
-
-// MySQL bağlantı ayarları (env'den çekiliyor)
+// MySQL bağlantı ayarları (.env dosyasından çekiliyor)
 const connection = mysql.createConnection({
     host: process.env.DB_HOST || "mysqlasteriondb-asteriondb1.f.aivencloud.com",
     port: process.env.DB_PORT || 25069,
@@ -29,26 +19,22 @@ const connection = mysql.createConnection({
 
 connection.connect(err => {
     if (err) {
-        console.error("Database bağlantı hatası:", err);
+        console.error("Database connection error:", err);
         process.exit(1);
     }
-    console.log("MySQL bağlantısı başarılı!");
+    console.log("MySQL connected successfully!");
 });
 
-// EJS view engine ayarı
-app.set("view engine", "ejs");
-app.set("views", path.join(__dirname, "views"));
-
-// Statik dosyaları sun (CSS, JS, resimler, vb.)
-app.use(express.static(__dirname));
+// Statik dosyaları sun
+app.use(express.static(path.join(__dirname)));
 
 // API: Bakım verilerini döndürür
 app.get("/api/bakimlar", (req, res) => {
     const sql = "SELECT ad, sonbakim, bakimbilgi, bakimfoto, cl, ph FROM musteriler";
     connection.query(sql, (error, results) => {
         if (error) {
-            console.error("Sorgu hatası:", error);
-            return res.status(500).json({ error: "Veri çekme hatası" });
+            console.error("Query error:", error);
+            return res.status(500).json({ error: "Data fetch error" });
         }
         res.json(results);
     });
@@ -56,33 +42,17 @@ app.get("/api/bakimlar", (req, res) => {
 
 // API: Müşteri verilerini döndürür
 app.get("/api/musteriler", (req, res) => {
-    // Burada "son kontrol" için hesapguncellenme sütununu,
-    // "numara" sütunu müşteri iletişimi için varsayıyoruz.
-    const sql = "SELECT ad, hesapguncellenme AS sonkontrol, borc, numara FROM musteriler";
+    // Müşteri listesi için: ad, borc, hesapguncellenme (sonkontrol) ve numara
+    const sql = "SELECT ad, borc, hesapguncellenme AS sonkontrol, numara FROM musteriler";
     connection.query(sql, (error, results) => {
         if (error) {
-            console.error("Sorgu hatası:", error);
-            return res.status(500).json({ error: "Veri çekme hatası" });
+            console.error("Query error:", error);
+            return res.status(500).json({ error: "Data fetch error" });
         }
         res.json(results);
     });
 });
 
-// Sayfa renderları
-app.get("/", (req, res) => {
-    res.render("index");
-});
-
-app.get("/bakim", (req, res) => {
-    res.render("bakim");
-});
-
-app.get("/musteriler", (req, res) => {
-    res.render("musteriler");
-});
-
-// Diğer sayfalar için benzer endpoint'ler eklenebilir
-
 app.listen(port, () => {
-    console.log(`Server http://localhost:${port} üzerinde çalışıyor.`);
+    console.log(`Server running at http://localhost:${port}`);
 });
