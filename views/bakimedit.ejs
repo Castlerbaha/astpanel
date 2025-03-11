@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Bakım Düzenle</title>
+    <link rel="stylesheet" href="/styles.css">
+    <style>
+        /* Ek stil */
+        .update-btn {
+            margin-left: 10px;
+            padding: 5px 10px;
+            font-size: 0.9em;
+            cursor: pointer;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+<%- include('partials/navbar') %>
+<div class="content">
+    <h1>Bakım Düzenle</h1>
+
+    <!-- Müşteri Listbox -->
+    <div class="form-group">
+        <label for="customerSelect">Müşteri Seçin:</label>
+        <select id="customerSelect">
+            <option value="">-- Müşteri Seçin --</option>
+        </select>
+    </div>
+
+    <!-- Bakım Düzenleme Alanı -->
+    <section id="bakimEditSection" style="display:none;">
+        <div class="card-custom" id="bakimBolumu">
+            <div class="row">
+                <div class="col-md-3" align="left">
+                    <div class="value-box bg-light">
+                        <h6>CL Değeri</h6>
+                        <p id="clValue">-</p>
+                        <button class="update-btn" data-field="cl">Değiştir</button>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="photo-area" id="bakimFotoArea">
+                        <img id="bakimFoto" src="" alt="Bakım Fotoğrafı" style="max-width:100%; display:none;">
+                        <span id="bakimFotoPlaceholder">BAKIM FOTOĞRAFI</span>
+                        <button class="update-btn" data-field="bakimfoto">Değiştir</button>
+                    </div>
+                    <div class="form-group">
+                        <label for="bakimAciklamasi" class="form-label">Bakım Açıklaması</label>
+                        <textarea class="form-control" id="bakimAciklamasi" rows="3" disabled></textarea>
+                        <button class="update-btn" data-field="bakimbilgi">Değiştir</button>
+                    </div>
+                    <div class="form-group">
+                        <label for="tarihSaat" class="form-label">Tarih &amp; Saat</label>
+                        <input type="text" id="tarihSaat" class="form-control" disabled>
+                        <button class="update-btn" data-field="sonbakim">Değiştir</button>
+                    </div>
+                </div>
+                <div class="col-md-3" align="right">
+                    <div class="value-box bg-light">
+                        <h6>pH Değeri</h6>
+                        <p id="phValue">-</p>
+                        <button class="update-btn" data-field="ph">Değiştir</button>
+                    </div>
+                </div>
+                <div class="col-md-12" align="center" style="margin-top:15px;">
+                    <div class="value-box bg-light">
+                        <h6>Çalışan</h6>
+                        <p id="calisanValue">-</p>
+                        <button class="update-btn" data-field="calisan">Değiştir</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<!-- Fotoğraf Modal'ı -->
+<div id="photoModal" class="modal">
+    <span id="modalClose" class="modal-close">&times;</span>
+    <div class="modal-content">
+        <img id="modalImage" src="" alt="Bakım Fotoğrafı">
+    </div>
+</div>
+
+<script>
+    let maintenanceData = [];
+    let selectedRecord = null;
+
+    // Format date as "HH:mm - DD.MM.YYYY"
+    function formatDate(dateStr) {
+        const date = new Date(dateStr);
+        if (isNaN(date)) return dateStr;
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        return `${hours}:${minutes} - ${day}.${month}.${year}`;
+    }
+
+    // Fetch maintenance data from /api/bakimlar
+    async function fetchMaintenanceData() {
+        try {
+            const response = await fetch('/api/bakimlar');
+            if (!response.ok) throw new Error("Error fetching maintenance data");
+            maintenanceData = await response.json();
+            populateCustomerSelect();
+        } catch (error) {
+            console.error(error);
+        }
+    }
+
+    // Populate the customer select list with unique names
+    function populateCustomerSelect() {
+        const select = document.getElementById('customerSelect');
+        select.innerHTML = '<option value="">-- Müşteri Seçin --</option>';
+        const names = [...new Set(maintenanceData.map(record => record.ad))];
+        names.forEach(name => {
+            const option = document.createElement('option');
+            option.value = name;
+            option.textContent = name;
+            select.appendChild(option);
+        });
+    }
+
+    // When a customer is selected, load their maintenance record into the form
+    document.getElementById('customerSelect').addEventListener('change', function() {
+        const selectedName = this.value;
+        if (!selectedName) {
+            document.getElementById('bakimEditSection').style.display = 'none';
+            selectedRecord = null;
+            return;
+        }
+        selectedRecord = maintenanceData.find(record => record.ad === selectedName);
+        if (selectedRecord) {
+            document.getElementById('bakimEditSection').style.display = 'block';
+            document.getElementById('clValue').textContent = selectedRecord.cl || '-';
+            document.getElementById('phValue').textContent = selectedRecord.ph || '-';
+            document.getElementById('bakimAciklamasi').value = selectedRecord.bakimbilgi || '';
+            document.getElementById('tarihSaat').value = formatDate(selectedRecord.sonbakim);
+            document.getElementById('calisanValue').textContent = selectedRecord.calisan || '-';
+            // Fotoğraf
+            if (selectedRecord.bakimfoto) {
+                document.getElementById('bakimFoto').src = selectedRecord.bakimfoto;
+                document.getElementById('bakimFoto').style.display = 'block';
+                document.getElementById('bakimFotoPlaceholder').style.display = 'none';
+            } else {
+                document.getElementById('bakimFoto').style.display = 'none';
+                document.getElementById('bakimFotoPlaceholder').style.display = 'block';
+            }
+        }
+    });
+
+    // Update field function: sends AJAX POST to update endpoint
+    async function updateField(field, newValue) {
+        try {
+            const response = await fetch('/api/bakim/update', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    ad: selectedRecord.ad, // ideally, use a unique id instead of ad
+                    field: field,
+                    value: newValue
+                })
+            });
+            if (
