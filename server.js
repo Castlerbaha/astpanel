@@ -7,22 +7,26 @@ require("dotenv").config();
 const app = express();
 const port = process.env.PORT || 3000;
 
+// EJS view engine ayarı
+app.set("view engine", "ejs");
+app.set("views", path.join(__dirname, "views"));
+
+// Statik dosyaları public klasöründen sun
+app.use(express.static(path.join(__dirname, "public")));
+
 // MySQL Connection Pool oluşturuluyor
 const pool = mysql.createPool({
-    host: process.env.DB_HOST || "mysqlasteriondb-asteriondb1.f.aivencloud.com",
-    port: process.env.DB_PORT || 25069,
-    user: process.env.DB_USER || "avnadmin",
-    password: process.env.DB_PASSWORD,  // .env dosyanızdan okunuyor
-    database: process.env.DB_NAME || "defaultdb",
+    host: process.env.DB_HOST,
+    port: process.env.DB_PORT,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME,
     ssl: { rejectUnauthorized: false },
     waitForConnections: true,
-    connectionLimit: 10,    // Aynı anda 10 bağlantıya kadar izin verir
+    connectionLimit: 10,
     queueLimit: 0,
-    connectTimeout: 10000   // 10 saniyelik bağlantı zaman aşımı
+    connectTimeout: 10000
 });
-
-// Statik dosyaların sunulması (index.html, bakim.html, musteriler.html, vb.)
-app.use(express.static(path.join(__dirname)));
 
 // API Endpoint: Bakım verileri
 app.get("/api/bakimlar", (req, res) => {
@@ -38,8 +42,6 @@ app.get("/api/bakimlar", (req, res) => {
 
 // API Endpoint: Müşteri verileri
 app.get("/api/musteriler", (req, res) => {
-    // Veritabanındaki sütun isimlerine göre sorgu;
-    // ad, borc, hesapguncellenme (sonkontrol alias) ve numara döndürülüyor
     const sql = "SELECT ad, borc, hesapguncellenme AS sonkontrol, numara FROM musteriler";
     pool.query(sql, (error, results) => {
         if (error) {
@@ -48,6 +50,17 @@ app.get("/api/musteriler", (req, res) => {
         }
         res.json(results);
     });
+});
+
+// Sayfa renderları
+app.get("/", (req, res) => {
+    res.render("index", { title: "Admin Panel - Anasayfa" });
+});
+app.get("/bakim", (req, res) => {
+    res.render("bakim", { title: "Bakım Listesi" });
+});
+app.get("/musteriler", (req, res) => {
+    res.render("musteriler", { title: "Müşteri Listesi" });
 });
 
 app.listen(port, () => {
