@@ -1,40 +1,22 @@
-<!DOCTYPE html>
-<html lang="tr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title><%= title %></title>
-    <link rel="stylesheet" href="/styles.css">
-</head>
-<body>
+<!DOCTYPE html><html lang="tr"><head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+    <title><%= title %></title><link rel="stylesheet" href="/styles.css"></head><body>
 <%- include('partials/navbar') %>
 <div class="content">
     <h1>Bakım Listesi</h1>
-    <div class="loading">Veriler yükleniyor...</div>
-    <table id="bakimTable" style="display:none;">
+    <div class="loading">Veriler yükleniyor…</div>
+    <table id="bakimTable" style="display:none">
         <thead>
         <tr>
-            <th data-key="ad">Ad</th>
-            <th data-key="sonbakim">Saat & Gün.Ay.Yıl</th>
-            <th data-key="bakimbilgi">Bakım Bilgisi</th>
+            <th data-key="customer">Müşteri</th>
+            <th data-key="sonbakim">Tarih</th>
+            <th data-key="bakimbilgi">Açıklama</th>
             <th data-key="calisan">Çalışan</th>
-            <th>Bakım Fotoğrafı</th>
-            <th data-key="cl">cl</th>
+            <th data-key="cl">CL</th>
             <th data-key="ph">pH</th>
         </tr>
         </thead>
-        <tbody id="bakimTableBody">
-        <!-- Veriler burada listelenecek -->
-        </tbody>
+        <tbody id="bakimTableBody"></tbody>
     </table>
 </div>
-<!-- Fotoğraf Modal'ı -->
-<div id="photoModal" class="modal">
-    <span id="modalClose" class="modal-close">&times;</span>
-    <div class="modal-content">
-        <img id="modalImage" src="" alt="Bakım Fotoğrafı">
-    </div>
-</div>
-<script src="/script.js"></script>
-</body>
-</html>
+<script src="/script.js"></script></body></html>

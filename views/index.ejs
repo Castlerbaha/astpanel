@@ -2,16 +2,34 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title><%= title %></title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Admin Panel - Anasayfa</title>
     <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
 <%- include('partials/navbar') %>
+
 <div class="content">
-    <h1>Admin Panel Anasayfa</h1>
-    <p>Hoş geldiniz! Bu panelde veriler, raporlar ve yönetim araçları yer alacak.</p>
+    <h1>Hoş geldiniz</h1>
+
+    <!-- Dashboard kartları -->
+    <div class="container">
+        <div class="card">
+            <h3>Hızlı Erişim</h3>
+            <ul style="list-style:none;padding-left:0;margin-top:10px">
+                <li><a href="/bakim"       class="btn" style="display:inline-block;margin:4px 0">Bakım Listesine Git</a></li>
+                <li><a href="/musteriler"  class="btn" style="display:inline-block;margin:4px 0">Müşteri Listesine Git</a></li>
+                <li><a href="/ariza"       class="btn" style="display:inline-block;margin:4px 0">Arıza Kayıtlarına Git</a></li>
+            </ul>
+        </div>
+
+        <div class="card">
+            <h3>Genel İstatistik</h3>
+            <p style="margin-top:8px">Bu bölümde özet veriler (toplam müşteri sayısı, son bakım tarihi vb.) gösterilebilir.</p>
+        </div>
+    </div>
 </div>
+
 <script src="/script.js"></script>
 </body>
 </html>

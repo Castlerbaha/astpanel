@@ -1,131 +1,37 @@
-/* public/styles.css */
+/* ---- Layout ---- */
+*{box-sizing:border-box;margin:0;padding:0;font-family:'Segoe UI',Tahoma,sans-serif}
+body{display:flex;min-height:100vh;background:#f0f2f5;color:#333}
+.sidebar{width:260px;background:#fff;padding:20px;box-shadow:2px 0 6px rgba(0,0,0,.1)}
+.sidebar h2{margin-bottom:20px;font-size:22px}
+.sidebar a{display:block;padding:10px 15px;margin-bottom:8px;text-decoration:none;color:#333;border-radius:4px}
+.sidebar a:hover{background:#e7e9ee}
+.menu-title{font-weight:bold;margin-bottom:4px}
+.submenu{list-style:none;padding-left:15px;margin-bottom:12px}
+.content{flex:1;padding:30px 40px;overflow-x:auto}
 
-/* Genel stiller */
-* {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-}
-body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: #f0f2f5;
-    display: flex;
-    min-height: 100vh;
-}
+/* ---- Card & Form ---- */
+.container{max-width:900px;margin:0 auto}
+.card{background:#fff;border-radius:8px;box-shadow:0 2px 6px rgba(0,0,0,.08);padding:20px;margin-bottom:20px}
+.form-group{margin-bottom:15px}
+label{display:block;margin-bottom:4px;font-weight:600}
+input,textarea,select{width:100%;padding:10px;border:1px solid #ccc;border-radius:4px}
 
-/* Navbar (Sidebar) */
-.sidebar {
-    width: 260px;
-    background: #fff;
-    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
-    padding: 20px;
-}
-.sidebar h2 {
-    margin-bottom: 20px;
-}
-.sidebar a {
-    display: block;
-    padding: 10px 15px;
-    margin-bottom: 10px;
-    color: #333;
-    text-decoration: none;
-    border-radius: 4px;
-    transition: background 0.3s;
-}
-.sidebar a:hover {
-    background: #e4e6eb;
-}
-.menu-item {
-    margin-bottom: 10px;
-}
-.menu-title {
-    padding: 10px 15px;
-    font-weight: bold;
-    cursor: pointer;
-    border-radius: 4px;
-    transition: background 0.3s;
-}
-.menu-title:hover {
-    background: #e4e6eb;
-}
-.submenu {
-    list-style: none;
-    padding-left: 20px;
-    margin-top: 5px;
-    display: none;
-}
-.menu-item.active .submenu {
-    display: block;
-}
+/* ---- Buttons ---- */
+.update-btn,.btn{padding:8px 12px;background:#007bff;border:none;border-radius:4px;color:#fff;cursor:pointer;font-size:14px}
+.update-btn:hover,.btn:hover{background:#0056b3}
 
-/* Content alanı */
-.content {
-    flex: 1;
-    padding: 40px;
-}
-.content h1 {
-    margin-bottom: 20px;
-}
+/* ---- Table ---- */
+table{width:100%;border-collapse:collapse;background:#fff;border-radius:8px;box-shadow:0 2px 6px rgba(0,0,0,.08);overflow:hidden}
+th,td{padding:12px 14px;border-bottom:1px solid #ddd;text-align:left}
+th{background:#e7e9ee;user-select:none}
+tr:hover{background:#f6f8fc}
+.loading{text-align:center;margin:30px 0;font-size:18px;font-weight:500}
 
-/* Tablo stilleri */
-table {
-    width: 100%;
-    border-collapse: collapse;
-    background: #fff;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-    border-radius: 8px;
-    overflow: hidden;
-    margin-top: 20px;
-}
-th, td {
-    padding: 12px 15px;
-    text-align: left;
-    border-bottom: 1px solid #ddd;
-}
-th {
-    background: #e4e6eb;
-    cursor: pointer;
-}
-tr:hover {
-    background: #f1f1f1;
-}
-.loading {
-    margin: 20px 0;
-    text-align: center;
-}
-.bakimfoto-link {
-    color: blue;
-    text-decoration: underline;
-    cursor: pointer;
-}
+/* ---- Photo ---- */
+.photo-area{text-align:center;margin:10px 0}
+.photo-area img{max-width:100%;border-radius:6px}
+.photo-area span{display:block;padding:20px;background:#eee;color:#666;border-radius:6px}
 
-/* Modal stilleri */
-.modal {
-    display: none;
-    position: fixed;
-    z-index: 100;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    overflow: auto;
-    background-color: rgba(0, 0, 0, 0.7);
-}
-.modal-content {
-    margin: 10% auto;
-    display: block;
-    max-width: 80%;
-}
-.modal-content img {
-    width: 100%;
-    height: auto;
-}
-.modal-close {
-    position: absolute;
-    top: 15px;
-    right: 35px;
-    color: #fff;
-    font-size: 40px;
-    font-weight: bold;
-    cursor: pointer;
-}
+
+
+

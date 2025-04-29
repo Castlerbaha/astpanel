@@ -1,194 +1,304 @@
-// public/script.js
+/* public/script.js – tüm sayfaları yöneten versiyon */
 
-// Navbar submenu toggle
-document.addEventListener("DOMContentLoaded", function() {
-    const bakimMenu = document.getElementById("bakim-menu");
-    if (bakimMenu) {
-        bakimMenu.addEventListener("click", function() {
-            this.classList.toggle("active");
+const qs = sel => document.querySelector(sel);
+
+/* ---- Ortak: tarih formatı ---- */
+const fmt = str => {
+    const d = new Date(str);
+    if (isNaN(d)) return str;
+    return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')} - ${String(d.getDate()).padStart(2, '0')}.${String(d.getMonth() + 1).padStart(2, '0')}.${d.getFullYear()}`;
+};
+
+/* ---- Ortak: sıralama ---- */
+function sortAttach(tableId, data, render) {
+    document.querySelectorAll(`#${tableId} th[data-key]`).forEach(th => {
+        let asc = true;
+        const key = th.dataset.key;
+        const label = th.innerText;
+
+        th.style.cursor = 'pointer';
+        th.onclick = () => {
+            data.sort((a, b) => {
+                let va = a[key], vb = b[key];
+                if (key.includes("tarih") || key.includes("bakim") || key.includes("son")) {
+                    va = new Date(va); vb = new Date(vb);
+                }
+                return (va < vb ? -1 : va > vb ? 1 : 0) * (asc ? 1 : -1);
+            });
+            asc = !asc;
+
+            document.querySelectorAll(`#${tableId} th[data-key]`).forEach(h => h.innerText = h.innerText.replace(/ ▲| ▼/, ''));
+            th.innerText = label + (asc ? ' ▲' : ' ▼');
+
+            render(data);
+        };
+    });
+}
+
+/* ---- Sayfa: Bakım Listesi ---- */
+async function loadBakim() {
+    const t = qs('#bakimTable'), body = qs('#bakimTableBody'), load = qs('.loading');
+    const data = await fetch('/api/bakimlarAll').then(r => r.json());
+    load.style.display = 'none'; t.style.display = 'table';
+
+    const render = (list) => {
+        body.innerHTML = '';
+        list.forEach(r => {
+            body.insertAdjacentHTML('beforeend', `
+        <tr>
+          <td>${r.customer}</td>
+          <td>${fmt(r.sonbakim)}</td>
+          <td>${r.bakimbilgi}</td>
+          <td>${r.calisan}</td>
+          <td>${r.cl}</td>
+          <td>${r.ph}</td>
+        </tr>
+      `);
         });
-    }
-    const musterilerMenu = document.getElementById("musteriler-menu");
-    if (musterilerMenu) {
-        musterilerMenu.addEventListener("click", function() {
-            this.classList.toggle("active");
+    };
+
+    render(data);
+    sortAttach('bakimTable', data, render);
+}
+
+/* ---- Sayfa: Müşteri Listesi ---- */
+async function loadMusteriler() {
+    const t = qs('#musterilerTable'), body = qs('#musterilerTableBody'), load = qs('.loading');
+    const data = await fetch('/api/musteriler').then(r => r.json());
+    load.style.display = 'none'; t.style.display = 'table';
+
+    const render = (list) => {
+        body.innerHTML = '';
+        list.forEach(r => {
+            body.insertAdjacentHTML('beforeend', `
+        <tr>
+          <td>${r.ad}</td>
+          <td>${r.borc}</td>
+          <td>${r.sonkontrol}</td>
+          <td>${r.numara || '-'}</td>
+        </tr>
+      `);
         });
+    };
+
+    render(data);
+    sortAttach('musterilerTable', data, render);
+}
+
+/* ---- Sayfa: Bakım Düzenle ---- */
+async function loadBakimEdit() {
+    const sel = qs('#customerSelect');
+    const section = qs('#bakimEditSection');
+    if (!sel || !section) return;
+
+    const cust = await fetch('/api/musteriler').then(r => r.json());
+    sel.innerHTML = '<option value="">-- Seçin --</option>';
+    cust.forEach(c => sel.insertAdjacentHTML('beforeend', `<option value="${c.id}">${c.ad}</option>`));
+
+    let rec = null;
+    sel.onchange = async function () {
+        const id = this.value;
+        if (!id) return section.style.display = 'none';
+        const list = await fetch(`/api/bakimlar?customerId=${id}`).then(r => r.json());
+        if (!list.length) return alert("Kayıt bulunamadı");
+        rec = list[0];
+        section.style.display = 'block';
+        fillEditForm(rec);
+    };
+
+    function fillEditForm(r) {
+        qs('#clValue').value = r.cl;
+        qs('#phValue').value = r.ph;
+        qs('#bakimAciklamasi').value = r.bakimbilgi;
+        qs('#tarihSaat').value = fmt(r.sonbakim);
+        qs('#calisanValue').value = r.calisan;
+        if (r.bakimfoto) {
+            qs('#bakimFoto').src = r.bakimfoto;
+            qs('#bakimFoto').style.display = 'block';
+            qs('#bakimFotoPlaceholder').style.display = 'none';
+        } else {
+            qs('#bakimFoto').style.display = 'none';
+            qs('#bakimFotoPlaceholder').style.display = 'block';
+        }
     }
+
+    document.querySelectorAll('.update-btn').forEach(btn => {
+        btn.onclick = async () => {
+            if (!rec) return;
+            const field = btn.dataset.field;
+            const current = (field === 'bakimbilgi')
+                ? qs('#bakimAciklamasi').value
+                : (qs(`#${field}Value`)?.value || '');
+
+            const nv = prompt("Yeni değer:", current);
+            if (!nv || nv === current) return;
+
+            await fetch('/api/bakim/update', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: rec.id, field, value: nv })
+            });
+
+            rec[field] = nv;
+            fillEditForm(rec);
+            alert("Güncellendi");
+        };
+    });
+}
+
+/* ---- Sayfa: Çalışanlar (zaten çalışıyordu) ---- */
+async function loadCalisanlar() {
+    const t = qs('#calisanTable'), body = qs('#calisanBody'), load = qs('.loading');
+    const data = await fetch('/api/calisanlar').then(r => r.json());
+    load.style.display = 'none'; t.style.display = 'table';
+
+    const render = (list) => {
+        body.innerHTML = '';
+        list.forEach(r => {
+            body.insertAdjacentHTML('beforeend', `
+        <tr>
+          <td>${r.ad}</td>
+          <td>${r.ilk_bakim ? fmt(r.ilk_bakim) : '-'}</td>
+          <td>${r.son_bakim ? fmt(r.son_bakim) : '-'}</td>
+          <td>${r.toplam_bakim}</td>
+          <td>${r.konum || '-'}</td>
+        </tr>
+      `);
+        });
+    };
+
+    render(data);
+    sortAttach('calisanTable', data, render);
+}
+
+/* ---- Router güncelle ---- */
+document.addEventListener('DOMContentLoaded',()=>{
+    if(qs('#arizaTable'))       return loadAriza();
+    if(qs('#bakimTable'))       return loadBakim();
+    if(qs('#musterilerTable'))  return loadMusteriler();
+    if(qs('#bakimEditSection')) return loadBakimEdit();
+    if(qs('#calisanTable'))     return loadCalisanlar();
+    if(qs('#calisanAddBtn'))    return initCalisanEdit();
 });
 
-// Format date as "HH:mm - DD.MM.YYYY"
-function formatDate(dateStr) {
-    const date = new Date(dateStr);
-    if (isNaN(date)) return dateStr;
-    const hours = String(date.getHours()).padStart(2, "0");
-    const minutes = String(date.getMinutes()).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const year = date.getFullYear();
-    return `${hours}:${minutes} - ${day}.${month}.${year}`;
-}
+/* ÇALIŞAN DÜZENLE SAYFASI */
+async function initCalisanEdit(){
+    const addBtn = document.getElementById('calisanAddBtn');
+    const delBtn = document.getElementById('calisanDelBtn');
+    const selDel = document.getElementById('delSelect');
+    if(!addBtn || !selDel) return;
 
-// Modal functions
-function showModal(src) {
-    const modal = document.getElementById("photoModal");
-    const modalImg = document.getElementById("modalImage");
-    if (modal && modalImg) {
-        modalImg.src = src;
-        modal.style.display = "block";
+    async function refreshDelList(){
+        const list = await fetch('/api/calisanlar').then(r=>r.json());
+        selDel.innerHTML='<option value="">-- Seçin --</option>';
+        list.forEach(c=> selDel.insertAdjacentHTML('beforeend',`<option value="${c.id}">${c.ad}</option>`));
     }
+    await refreshDelList();
+
+    addBtn.onclick = async ()=>{
+        const body = {
+            ad:    document.getElementById('addAd').value.trim(),
+            plaka: document.getElementById('addPlaka').value.trim(),
+            yetki: document.getElementById('addYetki').value,
+            sifre: document.getElementById('addSifre').value
+        };
+        if(!body.ad || !body.sifre) return alert("Ad ve şifre zorunlu!");
+        const r = await fetch('/api/calisanlar/add',{
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body:JSON.stringify(body)
+        });
+        if(r.ok){ alert("Eklendi"); document.querySelectorAll('#addAd,#addPlaka,#addSifre').forEach(i=>i.value=''); refreshDelList(); }
+        else alert("Hata!");
+    };
+
+    delBtn.onclick = async ()=>{
+        const id = selDel.value;
+        if(!id) return alert("Seçim yapın");
+        if(!confirm("Bu çalışan silinsin mi?")) return;
+        const r = await fetch('/api/calisanlar/delete',{
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({id})
+        });
+        if(r.ok){ alert("Silindi"); refreshDelList(); }
+        else alert("Hata!");
+    };
 }
 
-function closeModal() {
-    const modal = document.getElementById("photoModal");
-    if (modal) modal.style.display = "none";
-}
-
-const modalClose = document.getElementById("modalClose");
-if (modalClose) {
-    modalClose.addEventListener("click", closeModal);
-}
-window.addEventListener("click", function(event) {
-    const modal = document.getElementById("photoModal");
-    if (modal && event.target === modal) {
-        modal.style.display = "none";
-    }
+/* Router ekle */
+document.addEventListener('DOMContentLoaded',()=>{
+    if(document.getElementById('calisanAddBtn')) return initCalisanEdit();
+    /* diğer sayfa yükleyicileriniz burada kalır (loadBakim, loadMusteriler, ...) */
 });
 
-// For Bakım page: render and sorting functionality
-function renderBakimTable(data) {
-    const tableBody = document.getElementById("bakimTableBody");
-    tableBody.innerHTML = "";
-    data.forEach(item => {
-        const row = document.createElement("tr");
-        row.innerHTML = `
-      <td>${item.ad}</td>
-      <td>${formatDate(item.sonbakim)}</td>
-      <td>${item.bakimbilgi}</td>
-      <td>${item.calisan}</td>
-      <td>${item.bakimfoto ? `<span class="bakimfoto-link" data-src="${item.bakimfoto}">Fotoğrafı Gör</span>` : "Yok"}</td>
-      <td>${item.cl}</td>
-      <td>${item.ph}</td>
-    `;
-        tableBody.appendChild(row);
-    });
-    document.querySelectorAll(".bakimfoto-link").forEach(link => {
-        link.addEventListener("click", function() {
-            const src = this.getAttribute("data-src");
-            showModal(src);
+/* ---- Arıza Listesi ---- */
+async function loadAriza(){
+    const t=qs('#arizaTable'), body=qs('#arizaBody'), load=qs('.loading');
+    const data = await fetch('/api/arizalar').then(r=>r.json());
+    load.style.display='none'; t.style.display='table';
+
+    const render = list=>{
+        body.innerHTML='';
+        list.forEach(r=>{
+            body.insertAdjacentHTML('beforeend',`
+        <tr>
+          <td>${r.musteri}</td>
+          <td>${r.konu}</td>
+          <td>${r.aciklama}</td>
+          <td>${r.medya ? `<a href="${r.medya}" target="_blank">Göster</a>` : '-'}</td>
+          <td>${fmt(r.tarih)}</td>
+        </tr>`);
         });
-    });
+    };
+    render(data); sortAttach('arizaTable',data,render);
 }
 
-// Sorting functionality for Bakım page
-let bakimSortOrders = {};
+/* ---- Arıza Ekle Sayfası ---- */
+async function initArizaEkle(){
+    const form = document.getElementById('arizaForm');
+    const musteriSelect = document.getElementById('arizaMusteri');
+    if (!form || !musteriSelect) return;
 
-function sortBakimData(key, data) {
-    // Toggle sort order
-    bakimSortOrders[key] = bakimSortOrders[key] === "asc" ? "desc" : "asc";
-
-    // Reset header text with no arrow
-    document.querySelectorAll("th[data-key]").forEach(header => {
-        let baseText = header.getAttribute("data-base");
-        if (!baseText) {
-            baseText = header.innerText;
-            header.setAttribute("data-base", baseText);
-        }
-        header.innerText = baseText;
+    // Müşteri listesini yükle
+    const musteriler = await fetch('/api/musteriler').then(r => r.json());
+    musteriler.forEach(m => {
+        musteriSelect.insertAdjacentHTML('beforeend', `<option value="${m.id}">${m.ad}</option>`);
     });
 
-    // Append arrow to clicked header
-    const header = document.querySelector(`th[data-key="${key}"]`);
-    if (header) {
-        header.innerText = header.getAttribute("data-base") + (bakimSortOrders[key] === "asc" ? " ▲" : " ▼");
-    }
+    // Form gönderimi
+    form.onsubmit = async (e) => {
+        e.preventDefault();
+        const body = {
+            customerId: musteriSelect.value,
+            konu:       document.getElementById('arizaKonu').value.trim(),
+            aciklama:   document.getElementById('arizaAciklama').value.trim(),
+            medya:      document.getElementById('arizaMedya').value.trim()
+        };
+        if (!body.customerId || !body.konu || !body.aciklama) return alert("Tüm zorunlu alanları doldurun!");
 
-    data.sort((a, b) => {
-        let valA = a[key], valB = b[key];
-        if (key === "sonbakim") {
-            valA = new Date(valA);
-            valB = new Date(valB);
+        const r = await fetch('/api/arizalar/add', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        });
+
+        if (r.ok) {
+            alert('Arıza başarıyla kaydedildi!');
+            form.reset();
+        } else {
+            alert('Hata oluştu!');
         }
-        if (valA < valB) return bakimSortOrders[key] === "asc" ? -1 : 1;
-        if (valA > valB) return bakimSortOrders[key] === "asc" ? 1 : -1;
-        return 0;
-    });
-
-    renderBakimTable(data);
+    };
 }
 
-// For Musteriler page: render functionality
-function renderMusterilerTable(data) {
-    const tableBody = document.getElementById("musterilerTableBody");
-    tableBody.innerHTML = "";
-    data.forEach(item => {
-        const row = document.createElement("tr");
-        row.innerHTML = `
-      <td>${item.ad}</td>
-      <td>${item.borc}</td>
-      <td>${item.sonkontrol}</td>
-      <td>${item.numara || "Yok"}</td>
-    `;
-        tableBody.appendChild(row);
-    });
-}
-
-// Sorting functionality for Musteriler page
-let musteriSortOrders = {};
-
-function sortMusterilerData(key, data) {
-    musteriSortOrders[key] = musteriSortOrders[key] === "asc" ? "desc" : "asc";
-
-    // Reset header text with no arrow
-    document.querySelectorAll("#musterilerTable th[data-key]").forEach(header => {
-        let baseText = header.getAttribute("data-base");
-        if (!baseText) {
-            baseText = header.innerText;
-            header.setAttribute("data-base", baseText);
-        }
-        header.innerText = baseText;
-    });
-
-    // Append arrow to clicked header
-    const header = document.querySelector(`#musterilerTable th[data-key="${key}"]`);
-    if (header) {
-        header.innerText = header.getAttribute("data-base") + (musteriSortOrders[key] === "asc" ? " ▲" : " ▼");
-    }
-
-    data.sort((a, b) => {
-        let valA = a[key], valB = b[key];
-        if (valA < valB) return musteriSortOrders[key] === "asc" ? -1 : 1;
-        if (valA > valB) return musteriSortOrders[key] === "asc" ? 1 : -1;
-        return 0;
-    });
-
-    renderMusterilerTable(data);
-}
-
-// On page load, determine which page is loaded and fetch data accordingly
-document.addEventListener("DOMContentLoaded", async function() {
-    if (document.getElementById("bakimTable")) {
-        try {
-            const response = await fetch("/api/bakimlar");
-            if (!response.ok) throw new Error("Error fetching bakim data");
-            const data = await response.json();
-            document.querySelector(".loading").style.display = "none";
-            document.getElementById("bakimTable").style.display = "table";
-            renderBakimTable(data);
-        } catch (error) {
-            console.error(error);
-        }
-    }
-
-    if (document.getElementById("musterilerTable")) {
-        try {
-            const response = await fetch("/api/musteriler");
-            if (!response.ok) throw new Error("Error fetching musteriler data");
-            const data = await response.json();
-            document.querySelector(".loading").style.display = "none";
-            document.getElementById("musterilerTable").style.display = "table";
-            renderMusterilerTable(data);
-        } catch (error) {
-            console.error(error);
-        }
-    }
+/* ---- Router ---- */
+document.addEventListener('DOMContentLoaded',()=>{
+    if(qs('#arizaTable'))       return loadAriza();
+    if(qs('#bakimTable'))        return loadBakim();
+    if(qs('#musterilerTable'))   return loadMusteriler();
+    if(qs('#bakimEditSection'))  return loadBakimEdit();
+    if(qs('#calisanTable'))      return loadCalisanlar();
+    if(qs('#calisanAddBtn'))     return initCalisanEdit();
+    if(qs('#arizaForm'))         return initArizaEkle();   // << eklenen satır
 });

@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title><%= title %></title>
+    <link rel="stylesheet" href="/styles.css">
+    <style>
+        /* Müşteri Düzenle Sayfası için ek stil */
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .card {
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="text"], input[type="number"], textarea, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .btn {
+            padding: 10px 15px;
+            background: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .btn:hover {
+            background: #0056b3;
+        }
+        .section-title {
+            margin-bottom: 10px;
+            font-size: 1.2em;
+            font-weight: bold;
+            border-bottom: 1px solid #ccc;
+            padding-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+<!-- Ortak Navbar -->
+<%- include('partials/navbar') %>
+
+<div class="container">
+    <h1>Müşteri Düzenle</h1>
+
+    <!-- Yeni Müşteri Ekleme Bölümü -->
+    <div class="card">
+        <div class="section-title">Yeni Müşteri Ekle</div>
+        <div class="form-group">
+            <label for="newAd">Ad:</label>
+            <input type="text" id="newAd" placeholder="Müşteri adı">
+        </div>
+        <div class="form-group">
+            <label for="newNumara">Numara:</label>
+            <input type="text" id="newNumara" placeholder="İletişim numarası">
+        </div>
+        <div class="form-group">
+            <label for="newHesap">Hesap:</label>
+            <input type="text" id="newHesap" placeholder="Hesap bilgisi">
+        </div>
+        <div class="form-group">
+            <label for="newBorc">Borç:</label>
+            <input type="number" id="newBorc" placeholder="Borç miktarı">
+        </div>
+        <button class="btn" id="addCustomerBtn">Müşteri Ekle</button>
+    </div>
+
+    <!-- Müşteri Silme Bölümü -->
+    <div class="card">
+        <div class="section-title">Müşteri Sil</div>
+        <div class="form-group">
+            <label for="deleteCustomerSelect">Silinecek Müşteriyi Seçin:</label>
+            <select id="deleteCustomerSelect">
+                <option value="">-- Müşteri Seçin --</option>
+            </select>
+        </div>
+        <button class="btn" id="deleteCustomerBtn">Müşteriyi Sil</button>
+    </div>
+</div>
+
+<script>
+    // Yeni müşteri ekleme
+    document.getElementById("addCustomerBtn").addEventListener("click", async () => {
+        const ad = document.getElementById("newAd").value.trim();
+        const numara = document.getElementById("newNumara").value.trim();
+        const hesap = document.getElementById("newHesap").value.trim();
+        const borc = document.getElementById("newBorc").value.trim();
+        if (!ad || !numara || !hesap || !borc) {
+            alert("Lütfen tüm alanları doldurun!");
+            return;
+        }
+        try {
+            const response = await fetch("/api/musteriler/add", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ ad, numara, hesap, borc })
+            });
+            if (!response.ok) throw new Error("Müşteri ekleme hatası");
+            alert("Müşteri başarıyla eklendi!");
+            // Gerekirse form alanlarını temizleyin
+            document.getElementById("newAd").value = "";
+            document.getElementById("newNumara").value = "";
+            document.getElementById("newHesap").value = "";
+            document.getElementById("newBorc").value = "";
+            // Silme listbox'unu güncelle
+            fetchCustomerList();
+        } catch (error) {
+            console.error(error);
+            alert("Müşteri eklenirken hata oluştu!");
+        }
+    });
+
+    // Müşteri silme
+    document.getElementById("deleteCustomerBtn").addEventListener("click", async () => {
+        const ad = document.getElementById("deleteCustomerSelect").value;
+        if (!ad) {
+            alert("Lütfen silinecek müşteriyi seçin!");
+            return;
+        }
+        if (!confirm(ad + " adlı müşteriyi silmek istediğinize emin misiniz?")) return;
+        try {
+            const response = await fetch("/api/musteriler/delete", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ ad })
+            });
+            if (!response.ok) throw new Error("Müşteri silme hatası");
+            alert("Müşteri başarıyla silindi!");
+            // Silme listbox'unu güncelle
+            fetchCustomerList();
+        } catch (error) {
+            console.error(error);
+            alert("Müşteri silinirken hata oluştu!");
+        }
+    });
+
+    // Müşteri listesini çekip silme listbox'unu doldurma
+    async function fetchCustomerList() {
+        try {
+            const response = await fetch("/api/musteriler");
+            if (!response.ok) throw new Error("Müşteri verileri çekilemedi");
+            const data = await response.json();
+            const select = document.getElementById("deleteCustomerSelect");
+            select.innerHTML = '<option value="">-- Müşteri Seçin --</option>';
+            data.forEach(item => {
+                const option = document.createElement("option");
+                option.value = item.ad;
+                option.textContent = item.ad;
+                select.appendChild(option);
+            });
+        } catch (error) {
+            console.error(error);
+        }
+    }
+
+    document.addEventListener("DOMContentLoaded", fetchCustomerList);
+</script>
+</body>
+</html>

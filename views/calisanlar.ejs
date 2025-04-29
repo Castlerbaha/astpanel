@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Çalışan Listesi</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<%- include('partials/navbar') %>
+
+<div class="content">
+    <h1>Çalışan Listesi (Bugün)</h1>
+    <div class="loading">Veriler yükleniyor…</div>
+
+    <table id="calisanTable" style="display:none">
+        <thead>
+        <tr>
+            <th data-key="ad">Ad</th>
+            <th data-key="ilk_bakim">İlk Bakım Saati</th>
+            <th data-key="son_bakim">Son Bakım Saati</th>
+            <th data-key="toplam_bakim">Bugün Toplam</th>
+            <th data-key="konum">Konum</th>
+        </tr>
+        </thead>
+        <tbody id="calisanBody"></tbody>
+    </table>
+</div>
+
+<script src="/script.js"></script>
+</body>
+</html>
