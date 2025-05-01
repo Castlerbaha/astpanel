@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title><%= title %></title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<%- include('partials/navbar') %>
+
+<div class="content container">
+    <h1>Hesap Özeti</h1>
+
+    <!-- Yükleniyor göstergesi -->
+    <div id="loading" class="loading">Veriler yükleniyor…</div>
+
+    <!-- Asıl kart, veri geldikten sonra gösterilecek -->
+    <div id="hesapCard" class="card" style="display:none;">
+        <div class="form-group">
+            <label for="hesapMusteri">Müşteri Seçin:</label>
+            <select id="hesapMusteri"></select>
+        </div>
+        <div class="form-group">
+            <label for="hesapText">Hesap Detayları:</label>
+            <textarea id="hesapText" rows="6"></textarea>
+        </div>
+        <div style="display:flex; gap:20px; flex-wrap: wrap;">
+            <div class="form-group" style="flex:1; min-width:200px;">
+                <label for="hesapBorc">Borç:</label>
+                <input type="number" id="hesapBorc" step="0.01" />
+            </div>
+            <div class="form-group" style="flex:1; min-width:200px;">
+                <label for="hesapTarih">Son Güncelleme:</label>
+                <input type="text" id="hesapTarih" readonly />
+            </div>
+        </div>
+        <button class="btn" id="btnSaveHesap">Kaydet</button>
+    </div>
+</div>
+
+<script>
+    async function initHesap() {
+        const loading   = document.getElementById('loading');
+        const card      = document.getElementById('hesapCard');
+        const sel       = document.getElementById('hesapMusteri');
+        const txt       = document.getElementById('hesapText');
+        const borcIn    = document.getElementById('hesapBorc');
+        const dateIn    = document.getElementById('hesapTarih');
+        const btn       = document.getElementById('btnSaveHesap');
+
+        // 1) Müşterileri yükle
+        let customers;
+        try {
+            const res = await fetch('/api/musteriler');
+            customers = await res.json();
+        } catch(err) {
+            console.error('Müşteri listesi yüklenemedi', err);
+            alert('Müşteri listesi yüklenirken hata oluştu.');
+            return;
+        }
+
+        // Dropdown doldur
+        sel.innerHTML = '<option value="">-- Seçin --</option>';
+        customers.forEach(c => {
+            const opt = document.createElement('option');
+            opt.value = c.id;
+            opt.textContent = c.ad;
+            sel.appendChild(opt);
+        });
+
+        // 2) Kartı göster, yükleniyor gizle
+        loading.style.display = 'none';
+        card.style.display    = 'block';
+
+        // 3) Seçim değiştiğinde veriyi getir ve alanları doldur
+        sel.addEventListener('change', async () => {
+            const id = sel.value;
+            if (!id) {
+                txt.value = '';
+                borcIn.value = '';
+                dateIn.value = '';
+                return;
+            }
+            try {
+                const res = await fetch(`/api/hesap?customerId=${id}`);
+                const data = await res.json();
+                txt.value    = data.hesap      || '';
+                borcIn.value = data.borc       || '';
+                dateIn.value = data.hesapguncellenme || '';
+            } catch(err) {
+                console.error('Hesap verisi alınamadı', err);
+                alert('Hesap verisi alınırken hata!');
+            }
+        });
+
+        // 4) Kaydet butonuna tıklanınca güncelle
+        btn.addEventListener('click', async () => {
+            const id    = sel.value;
+            if (!id) {
+                alert('Önce müşteri seçin');
+                return;
+            }
+            const payload = {
+                customerId: id,
+                hesap: txt.value,
+                borc: borcIn.value
+            };
+            try {
+                const res = await fetch('/api/hesap/update', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (!res.ok) throw new Error('Sunucu hatası');
+                alert('Kaydedildi');
+                // Tarihi güncelle
+                const now = new Date();
+                const dd  = String(now.getDate()).padStart(2,'0');
+                const mm  = String(now.getMonth()+1).padStart(2,'0');
+                const yy  = now.getFullYear();
+                const hh  = String(now.getHours()).padStart(2,'0');
+                const mi  = String(now.getMinutes()).padStart(2,'0');
+                dateIn.value = `${dd}.${mm}.${yy} ${hh}:${mi}`;
+            } catch(err) {
+                console.error('Güncelleme başarısız', err);
+                alert('Güncelleme hatası oluştu');
+            }
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', initHesap);
+</script>
+</body>
+</html>

@@ -130,3 +130,55 @@ app.get('/musduzenle', (_, res) => res.render('musduzenle', { title: 'Müşteri 
 app.get('/arizaekle', (_, res) => res.render('arizaekle', { title: 'Arıza Ekle' }));
 
 app.listen(PORT, () => console.log(`→ http://localhost:${PORT}`));
+
+
+// Hesap Özeti Sayfa Görünümü
+app.get('/hesap', (req, res) => {
+    res.render('hesap', { title: 'Hesap Özeti' });
+});
+
+// Hesap Verisi Çekme API’si
+app.get('/api/hesap', (req, res) => {
+    const { customerId } = req.query;
+    if (!customerId) {
+        return res.status(400).json({ error: 'customerId gerekli' });
+    }
+    const sql = `
+    SELECT
+      hesap,
+      borc,
+      DATE_FORMAT(hesapguncellenme, '%d.%m.%Y %H:%i') AS hesapguncellenme
+    FROM customers
+    WHERE id = ?
+  `;
+    pool.query(sql, [customerId], (err, rows) => {
+        if (err) {
+            console.error('API /api/hesap error:', err);
+            return res.status(500).json({ error: err.message });
+        }
+        // Eğer hiçbir kayıt yoksa boş döner
+        res.json(rows[0] || { hesap: '', borc: 0, hesapguncellenme: '' });
+    });
+});
+
+// Hesap Güncelleme API’si
+app.post('/api/hesap/update', (req, res) => {
+    const { customerId, hesap, borc } = req.body;
+    if (!customerId) {
+        return res.status(400).json({ error: 'customerId gerekli' });
+    }
+    const sql = `
+    UPDATE customers
+      SET hesap = ?,
+          borc  = ?,
+          hesapguncellenme = NOW()
+    WHERE id = ?
+  `;
+    pool.query(sql, [hesap, borc, customerId], err => {
+        if (err) {
+            console.error('API /api/hesap/update error:', err);
+            return res.status(500).json({ error: err.message });
+        }
+        res.json({ ok: true });
+    });
+});
